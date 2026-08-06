@@ -1,0 +1,50 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+.venv/
+
+# Environment variables
+.env
+
+# VS Code settings
+.vscode/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# Logs
+*.log
+
+# Python packaging
+build/
+dist/
+*.egg-info/
+
+# Database files
+*.duckdb
+*.db
+
+# Temporary files
+*.tmp
+
+# Data files
+data/
+
+venv/
+.env
+__pycache__/
+*.pyc
+
+data/*.duckdb
+
+.vscode/
