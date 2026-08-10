@@ -1,6 +1,3 @@
-git add README.md
-git commit -m "Update README documentation"
-git push
 
 # 🇬🇧 UK Financial Market Lakehouse
 
