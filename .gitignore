@@ -1,50 +1,147 @@
-# Python cache
-__pycache__/
-*.py[cod]
-*$py.class
+# 🇬🇧 UK Financial Market Lakehouse
 
-# Virtual environment
-venv/
-.venv/
+A financial data engineering project that builds a market analytics platform using multiple public data sources.
 
-# Environment variables
-.env
+The project follows a modern lakehouse architecture:
 
-# VS Code settings
-.vscode/
+**Data Sources → Bronze → Silver → Gold → Power BI**
 
-# Jupyter
-.ipynb_checkpoints/
+---
 
-# macOS
-.DS_Store
+# 🏗️ Architecture
 
-# Windows
-Thumbs.db
+## Data Sources
 
-# Logs
-*.log
+### Yahoo Finance
+Provides:
 
-# Python packaging
-build/
-dist/
-*.egg-info/
+- Historical stock prices
+- Company fundamentals
+- Market information
 
-# Database files
-*.duckdb
-*.db
+### World Bank API
+Provides:
 
-# Temporary files
-*.tmp
+- UK GDP growth
+- UK inflation
+- UK unemployment
 
-# Data files
-data/
+---
 
-venv/
-.env
-__pycache__/
-*.pyc
+# 🥉 Bronze Layer
 
-data/*.duckdb
+Raw ingested data stored in DuckDB.
 
-.vscode/
+Tables:
+
+| Table | Source | Purpose |
+|---|---|---|
+| bronze_stock_prices | Yahoo Finance | Daily share prices |
+| bronze_company_fundamentals | Yahoo Finance | Company financial metrics |
+| bronze_uk_economic_indicators | World Bank | UK economic indicators |
+
+---
+
+# 🥈 Silver Layer
+
+Cleaned and transformed data.
+
+Tables:
+
+| Table | Purpose |
+|---|---|
+| silver_stock_prices | Clean prices with daily returns |
+| silver_company_metrics | Standardised company data |
+| silver_uk_economy | Clean UK economic indicators |
+
+Transformations:
+
+- Column standardisation
+- Duplicate removal
+- Data cleaning
+- Calculated metrics
+
+---
+
+# 🥇 Gold Layer
+
+Business and investment insight tables.
+
+Planned outputs:
+
+## Company Performance
+
+Analyses:
+
+- Returns
+- Volatility
+- Trading activity
+- Company comparisons
+
+## UK Market Environment
+
+Combines:
+
+- Stock performance
+- GDP
+- Inflation
+- Unemployment
+
+## Investment Ranking
+
+Creates:
+
+- Performance scores
+- Risk scores
+- Company rankings
+
+---
+
+# 📊 Power BI Dashboard
+
+The final stage will visualise Gold layer outputs.
+
+Planned dashboards:
+
+- Market overview
+- Company comparison
+- UK economy impact
+
+---
+
+# 🛠️ Technology Stack
+
+| Technology | Purpose |
+|---|---|
+| Python | Data pipelines |
+| DuckDB | Analytical database |
+| Pandas | Data processing |
+| Yahoo Finance | Market data |
+| World Bank API | Economic data |
+| Power BI | Visualisation |
+| GitHub | Version control |
+
+---
+
+# 📁 Project Structure
+
+```
+.
+├── data/
+│   ├── financial_market.duckdb
+│   └── ...
+├── src/
+│   ├── __init__.py
+│   ├── bronze/
+│   │   ├── __init__.py
+│   │   └── ...
+│   ├── silver/
+│   │   ├── __init__.py
+│   │   └── ...
+│   └── gold/
+│       ├── __init__.py
+│       └── ...
+├── notebooks/
+├── tests/
+└── README.md
+```
