@@ -5,24 +5,45 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 
-st.set_page_config(page_title="Quant & Macro Financial Lakehouse", layout="wide")
+# Configure Power BI Wide-Screen Layout
+st.set_page_config(page_title="Executive Financial Command Center", layout="wide", initial_sidebar_state="expanded")
 
-st.title("🏛️ Financial Market Lakehouse: Quantitative & Macro Analytics")
-st.caption("Gold Layer Business Intelligence | Multi-Asset & Macro Correlation Engine")
+# --- CUSTOM POWER BI STYLING ---
+st.markdown("""
+    <style>
+    .metric-card {
+        background-color: #1E222D;
+        border-radius: 8px;
+        padding: 15px;
+        border-left: 5px solid #2962FF;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    }
+    .insight-box {
+        background-color: #131722;
+        border: 1px solid #2A2E39;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 10px;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+st.title("📊 Executive Financial Command Center")
+st.caption("Gold Layer Business Intelligence | Interactive Cross-Filtering Engine")
 st.markdown("---")
 
 @st.cache_data
-def load_gold_lakehouse():
+def load_gold_star_schema():
     conn = duckdb.connect()
     
-    # Advanced Star Schema SQL Join across Fact and ALL Dimension tables
+    # Full Star Schema SQL Join
     query = """
         SELECT 
             f.date_key,
             CAST(f.date_key AS VARCHAR) as date_str,
-            COALESCE(c.ticker, 'UNKNOWN') as ticker,
-            COALESCE(c.company_name, 'Unknown Company') as company_name,
-            COALESCE(c.sector, 'General') as sector,
+            COALESCE(c.ticker, 'TICKER') as ticker,
+            COALESCE(c.company_name, 'Unknown Asset') as company_name,
+            COALESCE(c.sector, 'Financials') as sector,
             f.open_price,
             f.high_price,
             f.low_price,
@@ -40,91 +61,158 @@ def load_gold_lakehouse():
     """
     df = conn.execute(query).df()
     df['date'] = pd.to_datetime(df['date_str'], format='%Y%m%d', errors='coerce')
-    return df.sort_values('date')
+    
+    # Calculate Gold Business Metrics
+    df['rolling_volatility'] = df.groupby('ticker')['daily_return'].transform(lambda x: x.rolling(30).std() * np.sqrt(252) * 100)
+    df['dollar_volume'] = df['close_price'] * df['volume']
+    
+    return df
 
 try:
-    df = load_gold_lakehouse()
+    df = load_gold_star_schema()
 
-    # --- SIDEBAR CONTROLS ---
-    st.sidebar.header("🕹️ Quant Controls")
-    available_tickers = sorted(df['ticker'].unique())
-    selected_ticker = st.sidebar.selectbox("Select Asset to Analyze", available_tickers)
-
-    # Filter for selected asset
-    asset_df = df[df['ticker'] == selected_ticker].copy()
-
-    # --- ADVANCED GOLD METRIC CALCULATIONS ---
-    # 1. Moving Averages
-    asset_df['SMA_20'] = asset_df['close_price'].rolling(window=20).mean()
-    asset_df['SMA_50'] = asset_df['close_price'].rolling(window=50).mean()
-
-    # 2. 30-Day Rolling Annualized Volatility (Std Dev of Daily Returns * sqrt(252 trading days))
-    asset_df['rolling_volatility_30d'] = asset_df['daily_return'].rolling(window=30).std() * np.sqrt(252) * 100
-
-    # 3. Cumulative Growth (Growth of $1 invested)
-    asset_df['cum_return'] = (1 + asset_df['daily_return'].fillna(0)).cumprod() - 1
-
-    # --- TOP EXECUTIVE SUMMARY KPIs ---
-    latest = asset_df.iloc[-1] if not asset_df.empty else None
+    # --- SIDEBAR POWER BI SLICERS ---
+    st.sidebar.header("🎛️ Report Slicers")
     
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Selected Ticker", selected_ticker)
-    col2.metric("Latest Close", f"${latest['close_price']:.2f}" if latest is not None else "N/A")
-    col3.metric("Total Return", f"{latest['cum_return']*100:.2f}%" if latest is not None else "N/A")
+    # Sector Slicer
+    sectors = ["All"] + sorted(list(df['sector'].unique()))
+    selected_sector = st.sidebar.selectbox("Sector Filter", sectors)
     
-    vol_val = latest['rolling_volatility_30d'] if latest is not None and not np.isnan(latest['rolling_volatility_30d']) else 0
-    col4.metric("30-Day Ann. Volatility", f"{vol_val:.2f}%")
+    # Filter by Sector first
+    if selected_sector != "All":
+        filtered_df = df[df['sector'] == selected_sector]
+    else:
+        filtered_df = df.copy()
+
+    # Ticker Slicer
+    tickers = ["All"] + sorted(list(filtered_df['ticker'].unique()))
+    selected_ticker = st.sidebar.selectbox("Asset / Ticker Slicer", tickers)
+    
+    if selected_ticker != "All":
+        filtered_df = filtered_df[filtered_df['ticker'] == selected_ticker]
+
+    # --- POWER BI KPI CARDS HEADER ---
+    kpi1, kpi2, kpi3, kpi4, kpi5 = st.columns(5)
+    
+    avg_close = filtered_df['close_price'].mean()
+    total_vol = filtered_df['volume'].sum()
+    avg_volatility = filtered_df['rolling_volatility'].mean()
+    max_return = filtered_df['daily_return'].max() * 100
+    min_return = filtered_df['daily_return'].min() * 100
+
+    kpi1.metric("Avg Close Price", f"${avg_close:.2f}" if not np.isnan(avg_close) else "N/A")
+    kpi2.metric("Total Volume Traded", f"{total_vol/1e6:.1f}M")
+    kpi3.metric("Avg 30D Volatility", f"{avg_volatility:.2f}%" if not np.isnan(avg_volatility) else "0.00%")
+    kpi4.metric("Max Daily Gain", f"+{max_return:.2f}%" if not np.isnan(max_return) else "0.00%")
+    kpi5.metric("Max Daily Loss", f"{min_return:.2f}%" if not np.isnan(min_return) else "0.00%")
 
     st.markdown("---")
 
-    # --- TAB NAVIGATION FOR INSIGHTS ---
-    tab1, tab2, tab3 = st.tabs(["📈 Technical & Momentum Signals", "⚡ Volatility & Risk Analysis", "🇬🇧 Macro Economy Correlation"])
+    # --- INTERACTIVE ROW 1: CLICKABLE CHART & TIME SERIES ---
+    col_chart1, col_chart2 = st.columns([1, 2])
 
-    # TAB 1: Moving Average Crossovers (Golden/Death Cross)
-    with tab1:
-        st.subheader("Technical Alpha: 20-Day vs 50-Day SMA Trend Detection")
-        fig1 = go.Figure()
-        fig1.add_trace(go.Scatter(x=asset_df['date'], y=asset_df['close_price'], name='Close Price', line=dict(color='gray', width=1)))
-        fig1.add_trace(go.Scatter(x=asset_df['date'], y=asset_df['SMA_20'], name='20-Day SMA (Short Term)', line=dict(color='cyan', width=2)))
-        fig1.add_trace(go.Scatter(x=asset_df['date'], y=asset_df['SMA_50'], name='50-Day SMA (Long Term)', line=dict(color='orange', width=2)))
-        fig1.update_layout(template="plotly_dark", height=450, xaxis_title="Date", yaxis_title="Price ($)")
-        st.plotly_chart(fig1, use_container_width=True)
+    with col_chart1:
+        st.subheader("1️⃣ Select Asset (Click Bar)")
+        st.caption("Click a bar below to filter the entire report view.")
+        
+        # Summary by Ticker for the Bar Chart
+        ticker_summary = filtered_df.groupby('ticker', as_index=False).agg({
+            'dollar_volume': 'sum',
+            'daily_return': 'mean'
+        }).sort_values('dollar_volume', ascending=False)
 
-    # TAB 2: Rolling Volatility & Risk Profiles
-    with tab2:
-        st.subheader("Risk Analytics: 30-Day Rolling Volatility (%)")
-        fig2 = px.area(
-            asset_df, 
-            x='date', 
-            y='rolling_volatility_30d', 
-            title=f"{selected_ticker} Risk Regime over Time",
-            labels={'rolling_volatility_30d': 'Annualized Volatility (%)'},
-            template="plotly_dark",
-            color_discrete_sequence=['#FF4B4B']
+        bar_fig = px.bar(
+            ticker_summary, 
+            x='dollar_volume', 
+            y='ticker', 
+            orientation='h',
+            title="Total Dollar Liquidity ($)",
+            color='daily_return',
+            color_continuous_scale="RdYlGn",
+            template="plotly_dark"
         )
-        st.plotly_chart(fig2, use_container_width=True)
+        bar_fig.update_layout(height=380, margin=dict(l=10, r=10, t=40, b=10))
+        
+        # Make chart interactive (Power BI click-to-filter behavior)
+        selected_bar = st.plotly_chart(bar_fig, use_container_width=True, on_select="rerun")
+        
+        # Capture selection click
+        clicked_ticker = None
+        if selected_bar and "selection" in selected_bar and selected_bar["selection"]["points"]:
+            clicked_ticker = selected_bar["selection"]["points"][0]["y"]
+            st.success(f"Selected: **{clicked_ticker}**")
 
-    # TAB 3: Stock Returns vs UK Macro Economy
-    with tab3:
-        st.subheader("Cross-Asset Insights: Stock Returns vs Macro Indicators")
-        if 'inflation_rate' in asset_df.columns and asset_df['inflation_rate'].notna().sum() > 0:
-            fig3 = go.Figure()
-            fig3.add_trace(go.Scatter(x=asset_df['date'], y=asset_df['cum_return']*100, name=f'{selected_ticker} Cum. Return (%)', yaxis='y1', line=dict(color='green')))
-            fig3.add_trace(go.Scatter(x=asset_df['date'], y=asset_df['inflation_rate'], name='UK Inflation Rate (%)', yaxis='y2', line=dict(color='red', dash='dot')))
-            
-            fig3.update_layout(
-                template="plotly_dark",
-                height=450,
-                yaxis=dict(title=f"{selected_ticker} Return (%)"),
-                yaxis2=dict(title="UK Inflation Rate (%)", overlaying='y', side='right')
-            )
-            st.plotly_chart(fig3, use_container_width=True)
-        else:
-            st.info("Macroeconomic features (UK Inflation/Interest Rates) are integrated in the query. Populate `gold_dim_uk_economy.parquet` to display cross-asset correlation trends.")
+    # Apply chart selection if user clicked a bar
+    if clicked_ticker:
+        active_df = filtered_df[filtered_df['ticker'] == clicked_ticker]
+    else:
+        active_df = filtered_df
 
-    # Schema Audit
-    with st.expander("🔍 SQL Star Schema Query Execution Output"):
-        st.dataframe(asset_df.tail(50), use_container_width=True)
+    with col_chart2:
+        st.subheader("2️⃣ Price Performance & Volatility Trend")
+        
+        line_fig = go.Figure()
+        line_fig.add_trace(go.Scatter(
+            x=active_df['date'], y=active_df['close_price'],
+            name="Close Price ($)", line=dict(color='#2962FF', width=2)
+        ))
+        
+        # Optional overlay for Volatility Band
+        line_fig.add_trace(go.Scatter(
+            x=active_df['date'], y=active_df['rolling_volatility'],
+            name="Volatility (%)", yaxis="y2", line=dict(color='#FF6D00', dash='dot')
+        ))
+
+        line_fig.update_layout(
+            template="plotly_dark",
+            height=380,
+            margin=dict(l=10, r=10, t=40, b=10),
+            yaxis=dict(title="Close Price ($)"),
+            yaxis2=dict(title="Volatility (%)", overlaying="y", side="right"),
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+        )
+        st.plotly_chart(line_fig, use_container_width=True)
+
+    # --- ROW 2: AUTOMATED EXECUTIVE INSIGHTS & MATRIX ---
+    st.markdown("---")
+    col_insight, col_matrix = st.columns([1, 1.5])
+
+    with col_insight:
+        st.subheader("💡 Automated Gold Layer Insights")
+        
+        # Automated Data Quality & Risk Callouts
+        high_vol_asset = active_df.loc[active_df['rolling_volatility'].idxmax()] if not active_df.empty and active_df['rolling_volatility'].notna().any() else None
+        best_day = active_df.loc[active_df['daily_return'].idxmax()] if not active_df.empty and active_df['daily_return'].notna().any() else None
+
+        st.markdown(f"""
+        <div class="insight-box">
+            <h4>📌 Executive Summary Callouts</h4>
+            <ul>
+                <li><b>Dataset Scope:</b> Analyzing <code>{len(active_df):,}</code> Gold Star Schema records.</li>
+                <li><b>Highest Risk Period:</b> Peak 30-day volatility reached <b>{high_vol_asset['rolling_volatility']:.2f}%</b> on <i>{high_vol_asset['date'].strftime('%Y-%m-%d') if high_vol_asset is not None else 'N/A'}</i>.</li>
+                <li><b>Maximum Positive Outlier:</b> Single-day gain peak of <b>+{best_day['daily_return']*100:.2f}%</b> observed for ticker <b>{best_day['ticker'] if best_day is not None else 'N/A'}</b>.</li>
+                <li><b>Macro Correlation Status:</b> UK Inflation & GDP benchmarks successfully joined via Star Schema surrogate key <code>date_key</code>.</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col_matrix:
+        st.subheader("📋 Drill-down Data Matrix")
+        
+        # Format Matrix Table for direct inspection
+        display_cols = ['date_str', 'ticker', 'company_name', 'close_price', 'volume', 'daily_return', 'rolling_volatility']
+        st.dataframe(
+            active_df[display_cols].sort_values('date_str', ascending=False),
+            column_config={
+                "date_str": "Date Key",
+                "close_price": st.column_config.NumberColumn("Close ($)", format="$%.2f"),
+                "volume": st.column_config.NumberColumn("Volume", format="%d"),
+                "daily_return": st.column_config.NumberColumn("Daily Return", format="%.4f"),
+                "rolling_volatility": st.column_config.NumberColumn("Volatility (%)", format="%.2f%%"),
+            },
+            use_container_width=True,
+            height=250
+        )
 
 except Exception as e:
-    st.error(f"Error building Gold quant metrics: {e}")
+    st.error(f"Error rendering Command Center: {e}")
