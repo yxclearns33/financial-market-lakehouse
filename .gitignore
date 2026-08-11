@@ -1,11 +1,13 @@
 # ==========================================
 # 1. Database, Parquet & Heavy Data Files
 # ==========================================
-data/
+# Ignore large raw data dumps and temporary databases
+data/raw/
+data/bronze/
+data/silver/
 data_exports/
 *.duckdb
 *.duckdb.wal
-*.parquet
 *.csv
 *.xlsx
 *.xls
@@ -14,50 +16,7 @@ data_exports/
 *.sqlite
 *.sqlite3
 
-# ==========================================
-# 2. Virtual Environments & Python Caches
-# ==========================================
-venv/
-.venv/
-env/
-ENV/
-env.bak/
-venv.bak/
-__pycache__/
-*.py[cod]
-*$py.class
-.pytest_cache/
-.mypy_cache/
-.coverage
-htmlcov/
-
-# ==========================================
-# 3. Editors, IDEs & OS System Files
-# ==========================================
-.vscode/
-.idea/
-*.swp
-*.swo
-.DS_Store
-.DS_Store?
-ehthumbs.db
-Thumbs.db
-desktop.ini
-
-# ==========================================
-# 4. Notebooks, Logs & Temp Files
-# ==========================================
-.ipynb_checkpoints/
-*.log
-logs/
-*.tmp
-*.temp
-
-# ==========================================
-# 5. Environment Variables & Secrets
-# ==========================================
-.env
-.env.*
-secrets.json
-*.key
-*.pem
+# Ignore generic parquet files EXCEPT the Gold layer needed for Streamlit
+*.parquet
+!data/gold/
+!data/gold/**
