@@ -1,13 +1,18 @@
-
-**UK Financial Market Lakehouse**
+# 🇬🇧 UK Financial Market Lakehouse
 
 A financial data engineering project that builds a cloud-style lakehouse architecture using market data, company fundamentals, and UK economic indicators.
 
 The project demonstrates a complete data pipeline workflow:
 
-**Ingestion → Bronze → Silver → Gold Analytics**
+**Ingestion → Bronze → Silver → Gold Analytics → Executive Dashboard**
 
-The goal is to create a platform that can combine company performance with wider UK economic conditions to generate meaningful financial insights.
+The goal is to create a platform that can combine company performance with wider UK economic conditions to generate meaningful financial insights, visualized through an interactive executive command center.
+
+## 🚀 Live Executive Command Center
+
+**Explore the interactive Streamlit dashboard:**
+
+👉 [Financial Market Lakehouse Analysis](https://financial-market-lakehouse-analysis.streamlit.app/)
 
 ---
 
@@ -30,9 +35,11 @@ D --> D1[silver_stock_prices]
 D --> D2[silver_company_metrics]
 D --> D3[silver_uk_economy]
 
-E --> E1[Company Performance Insights]
-E --> E2[Market & Economy Analysis]
-E --> E3[Investment Research Dashboard]
+E --> E1[gold_fact_stock_performance.parquet]
+E --> E2[gold_dim_company.parquet]
+E --> E3[DuckDB OLAP Engine]
+
+E3 --> F[Executive Financial Command Center App]
 ```
 
 ---
@@ -41,14 +48,14 @@ E --> E3[Investment Research Dashboard]
 
 ## 1. Yahoo Finance
 
-Used for market and company-level financial data.
+Used for market and company-level financial data across major tech assets (`AAPL`, `MSFT`, `NVDA`, `AMZN`, `GOOGL`).
 
-Datasets:
+### Datasets
 
 * Historical stock prices
 * Company fundamentals
 
-Examples:
+### Examples
 
 * Share price movements
 * Trading volume
@@ -61,13 +68,13 @@ Examples:
 
 Used for UK economic indicators.
 
-Datasets:
+### Datasets
 
 * GDP growth
 * Inflation
 * Unemployment
 
-Purpose:
+### Purpose
 
 To connect company performance with wider economic conditions.
 
@@ -75,15 +82,15 @@ To connect company performance with wider economic conditions.
 
 # 🥉 Bronze Layer
 
-The Bronze layer stores raw ingested data with minimal transformation.
+The Bronze layer stores raw ingested data with minimal transformation inside an in-memory or file-backed DuckDB database.
 
-Current tables:
+### Current Tables
 
-| Table                         | Source        | Purpose               |
-| ----------------------------- | ------------- | --------------------- |
-| bronze_stock_prices           | Yahoo Finance | Daily market prices   |
-| bronze_company_fundamentals   | Yahoo Finance | Company information   |
-| bronze_uk_economic_indicators | World Bank    | UK macroeconomic data |
+| Table                           | Source        | Purpose               |
+| ------------------------------- | ------------- | --------------------- |
+| `bronze_stock_prices`           | Yahoo Finance | Daily market prices   |
+| `bronze_company_fundamentals`   | Yahoo Finance | Company information   |
+| `bronze_uk_economic_indicators` | World Bank    | UK macroeconomic data |
 
 ---
 
@@ -91,7 +98,7 @@ Current tables:
 
 The Silver layer cleans and prepares data for analysis.
 
-Transformations include:
+### Transformations Include
 
 * Standardising column names
 * Removing unnecessary fields
@@ -99,32 +106,30 @@ Transformations include:
 * Creating calculated metrics
 * Preparing analytical datasets
 
-Planned tables:
+### Current Tables
 
-| Table                  | Purpose                        |
-| ---------------------- | ------------------------------ |
-| silver_stock_prices    | Clean market data with returns |
-| silver_company_metrics | Clean company fundamentals     |
-| silver_uk_economy      | Prepared economic indicators   |
+| Table                    | Purpose                        |
+| ------------------------ | ------------------------------ |
+| `silver_stock_prices`    | Clean market data with returns |
+| `silver_company_metrics` | Clean company fundamentals     |
+| `silver_uk_economy`      | Prepared economic indicators   |
 
 ---
 
-# 🥇 Gold Layer
+# 🥇 Gold Layer & Executive Dashboard
 
-The Gold layer creates business and investment insights.
+The Gold layer creates business and investment insights, structured into a high-performance Star Schema and exported as columnar `.parquet` files for fast OLAP querying.
 
-Planned analytical outputs:
+## Analytical Outputs & BI Features
 
-## Company Performance
-
-Examples:
+### Company Performance Insights
 
 * Best performing companies
-* Daily returns
-* Volatility analysis
-* Price trends
+* Daily returns and volume tracking
+* 30-Day Rolling Annualized Volatility analysis
+* Price trends across multi-asset portfolios (`AAPL`, `MSFT`, `NVDA`, `AMZN`, `GOOGL`)
 
-## Market Environment
+### Market Environment & Macro Analysis
 
 Combines:
 
@@ -136,20 +141,21 @@ Combines:
 Possible insights:
 
 * How economic conditions affect markets
-* Company resilience during economic changes
+* Company resilience during macroeconomic changes
 
-## Investment Research
+### Investment Research & Executive Command Center (`app.py`)
 
-Combines:
+Combines company fundamentals and market performance into an interactive web application featuring:
 
-* Company fundamentals
-* Market performance
+* **Interactive Cross-Filtering:** Clickable liquidity bar charts that dynamically filter companion time-series trends and data matrices.
+* **Automated Data Storytelling:** Built-in insights engine highlighting peak market risk dates and maximum return spikes automatically.
+* **Star Schema Data Matrix:** Formatted tabular inspection windows featuring currency, volume, and volatility formatting.
 
-To support:
+### 🌐 Live Dashboard
 
-* Company comparison
-* Financial analysis
-* Investment research
+Access the deployed Executive Financial Command Center here:
+
+👉 [Open the Streamlit Executive Command Center](https://financial-market-lakehouse-analysis.streamlit.app/)
 
 ---
 
@@ -158,22 +164,27 @@ To support:
 | Technology        | Purpose                           |
 | ----------------- | --------------------------------- |
 | Python            | Data ingestion and transformation |
-| DuckDB            | Analytical database               |
-| Pandas            | Data processing                   |
+| DuckDB & Parquet  | Analytical database & storage     |
+| Pandas & Plotly   | Data processing and visualization |
+| Streamlit Cloud   | Web application deployment        |
 | Yahoo Finance API | Market data                       |
 | World Bank API    | Economic data                     |
-| Git/GitHub        | Version control                   |
+| Git/GitHub        | Version control and CI/CD         |
 
 ---
 
 # 📁 Project Structure
 
-```
+```text
 financial_market_lakehouse
-
 │
 ├── data
-│   └── financial_market.duckdb
+│   ├── financial_market.duckdb
+│   └── gold_exports
+│       ├── gold_fact_stock_performance.parquet
+│       ├── gold_dim_company.parquet
+│       ├── gold_dim_date.parquet
+│       └── gold_dim_uk_economy.parquet
 │
 ├── ingestion
 │   ├── ingest_stock_prices.py
@@ -189,8 +200,11 @@ financial_market_lakehouse
 │   └── cleaning pipelines
 │
 ├── gold
-│   └── analytics models
+│   ├── build_gold.py
+│   └── export_gold.py
 │
+├── app.py                # Executive Financial Command Center
+├── requirements.txt      # Cloud dependencies
 ├── README.md
 └── .gitignore
 ```
@@ -202,10 +216,14 @@ financial_market_lakehouse
 This project demonstrates:
 
 ✅ Multi-source financial data ingestion
-✅ Lakehouse architecture principles
-✅ Data modelling with Bronze/Silver/Gold layers
-✅ Financial analytics preparation
-✅ Real-world data engineering practices
+
+✅ Lakehouse architecture principles (Bronze/Silver/Gold)
+
+✅ Star Schema data modelling with DuckDB & Parquet
+
+✅ Quantitative risk analytics and automated insights
+
+✅ Production-grade web deployment using Streamlit Cloud
 
 ---
 
@@ -213,14 +231,17 @@ This project demonstrates:
 
 Future development:
 
-* Add automated pipelines
-* Add data quality checks
-* Add dashboard layer
-* Add more financial analytics
-* Deploy using cloud services
+* Add automated pipeline execution via GitHub Actions
+* Add comprehensive automated data quality validation checks
+* Expand macroeconomic cross-asset correlations
+* Deploy advanced portfolio optimization tools
 
 ---
 
 # Author
 
-Financial Market Lakehouse Project
+**Financial Market Lakehouse Project**
+
+**Samuel Adebusoye**
+
+[🚀 View the Live Executive Financial Command Center](https://financial-market-lakehouse-analysis.streamlit.app/)
