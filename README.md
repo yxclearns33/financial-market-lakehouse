@@ -1,8 +1,5 @@
-git add README.md
-git commit -m "Update README documentation"
-git push
 
-# 🇬🇧 UK Financial Market Lakehouse
+**UK Financial Market Lakehouse**
 
 A financial data engineering project that builds a cloud-style lakehouse architecture using market data, company fundamentals, and UK economic indicators.
 
